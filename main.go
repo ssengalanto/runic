@@ -17,15 +17,27 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	proto "github.com/ssengalanto/runic/proto"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/status"
 )
 
 type server struct {
 	proto.UnimplementedGreeterServer
+	grpc_health_v1.UnimplementedHealthServer
 }
 
 func (s *server) Greet(_ context.Context, in *proto.GreetRequest) (*proto.GreetReply, error) {
 	return &proto.GreetReply{Message: in.Name + " world"}, nil
+}
+
+func (s *server) Check(ctx context.Context, in *grpc_health_v1.HealthCheckRequest) (*grpc_health_v1.HealthCheckResponse, error) {
+	return &grpc_health_v1.HealthCheckResponse{Status: grpc_health_v1.HealthCheckResponse_SERVING}, nil
+}
+
+func (s *server) Watch(in *grpc_health_v1.HealthCheckRequest, _ grpc_health_v1.Health_WatchServer) error {
+	return status.Error(codes.Unimplemented, "unimplemented")
 }
 
 func main() {
@@ -39,6 +51,7 @@ func main() {
 	s := grpc.NewServer()
 	// Attach the Greeter service to the server
 	proto.RegisterGreeterServer(s, &server{})
+	grpc_health_v1.RegisterHealthServer(s, &server{})
 
 	// Serve gRPC server in a separate goroutine
 	log.Println("Serving gRPC on 0.0.0.0:8080")
@@ -60,8 +73,9 @@ func main() {
 		log.Fatalf("Failed to dial server: %v", err)
 	}
 
-	gwmux := runtime.NewServeMux()
-	// Register Greeter
+	healthClient := grpc_health_v1.NewHealthClient(conn)
+	gwmux := runtime.NewServeMux(runtime.WithHealthzEndpoint(healthClient))
+
 	if err := proto.RegisterGreeterHandler(context.Background(), gwmux, conn); err != nil {
 		log.Fatalf("Failed to register gateway: %v", err)
 	}
