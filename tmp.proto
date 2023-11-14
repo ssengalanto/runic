@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package tmp.v1;
+
+option go_package = "github.com/ssengalanto/runic/tmp/v1";
+
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+
+// Greeter service provides a simple greeting service.
+service Greeter {
+  // Sends a greeting message.
+  //
+  // Sends a friendly greeting message.
+  rpc Greet (GreetRequest) returns (GreetReply) {
+    option (google.api.http) = {
+      post: "/v1/greet"
+      body: "*"
+    };
+  }
+}
+
+
+message GreetRequest {
+  string name = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message GreetReply {
+  string message = 1;
+}
