@@ -31,3 +31,6 @@ volumes/
 
 # Go workspace file
 go.work
+
+# proto
+proto/
