@@ -4,7 +4,7 @@ dotenv: [ '.env' ]
 
 includes:
   go:
-    taskfile: ./taskfiles/golang.yml
+    taskfile: ./taskfiles/golang.yaml
     vars:
       PACKAGES:
         sh: go list ./...
@@ -29,3 +29,15 @@ tasks:
     desc: Audits Go codes. (Shorthand for `task go:audit`)
     cmds:
       - task: go:audit
+
+  gen:proto:
+    desc: Generate proto types
+    cmds:
+      - buf generate
+
+  run:
+    desc: Run the application
+    deps:
+      - task: gen:proto
+    cmds:
+      - go run main.go
